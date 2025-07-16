@@ -2,10 +2,11 @@ import os
 from game_rag import GameRAG
 from Player import PlayerStatus, GameState  # Import GameState from Player
 from controller import Controller
+from config import PLAYER_NUM, VILLAGER_NUM, WEREWOLF_NUM
 
 
 def main():
-    if not os.environ.get("OPENAI_API_KEY"):  # Fixed typo
+    if not os.environ.get("OPENAI_API_KEY"):
         print("Please set your OPENAI_API_KEY")
         return
 
@@ -44,7 +45,7 @@ def main():
     rag.add_villager_knowledge(villager_strategies, initial_state)
 
     game = Controller(rag)
-    players = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank"]
+    players = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Carlos"]
     game.setup_game(players)
     game.play_game()
 

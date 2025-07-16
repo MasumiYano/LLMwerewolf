@@ -1,10 +1,11 @@
 from game_rag import GameRAG
-from Player import Player, GameState, PlayerStatus  # Import GameState from Player
-from typing import Dict, List  # Added List import
+from Player import Player, GameState, PlayerStatus
+from typing import Dict, List
 import random
 from werewolf import Werewolf
 from villager import Villager
-from langchain_core.messages import SystemMessage, HumanMessage  # Added import
+from langchain_core.messages import SystemMessage, HumanMessage
+from config import VILLAGER_NUM, PLAYER_NUM, WEREWOLF_NUM
 
 
 class Controller:
@@ -31,10 +32,10 @@ class Controller:
 
     def setup_game(self, player_names: List[str]):
         """Setup game with 4 villagers and 2 werewolves"""  # Fixed comment
-        if len(player_names) != 6:  # Fixed number
-            raise ValueError("Need exactly 6 players")
+        if len(player_names) != PLAYER_NUM:  # Fixed number
+            raise ValueError(f"Need exactly {PLAYER_NUM} players")
 
-        werewolf_players = random.sample(player_names, 2)
+        werewolf_players = random.sample(player_names, WEREWOLF_NUM)
         self.player_order = player_names.copy()
         random.shuffle(self.player_order)
 

@@ -8,6 +8,8 @@ from langchain_core.tools import tool
 from Player import GameState
 from typing import Optional, Any, Dict
 from langchain_openai import ChatOpenAI
+from langchain_core.documents import Document
+from config import VILLAGER_NUM, WEREWOLF_NUM, PLAYER_NUM
 
 
 class GameRAG:
@@ -55,19 +57,61 @@ class GameRAG:
             embedding_function=self.embeddings,
         )
 
-    def load_rules(
-        self, url: str = "https://teambuilding.com/blog/werewolf-game-rules"
-    ):
-        loader = WebBaseLoader(
-            web_paths=(url,),
-            bs_kwargs=dict(
-                parse_only=bs4.SoupStrainer(
-                    class_=("post-content", "post-title", "post-header")
-                )
-            ),
-        )
+    def load_rules(self):
+        rules_text = f"""
+        WEREWOLF GAME RULES
 
-        return loader.load()
+        SETUP:
+        - {PLAYER_NUM} players total: {VILLAGER_NUM} villagers and {WEREWOLF_NUM} werewolves
+        - Roles are assigned secretly at the start of the game
+        - Players sit in a circle for discussion phases
+
+        GAME PHASES:
+
+        NIGHT PHASE:
+        - All players close their eyes (go to sleep)
+        - Werewolves wake up and silently discuss who to eliminate
+        - Werewolves choose one villager to eliminate
+        - Werewolves go back to sleep
+        - The eliminated player is removed from the game
+
+        DAY PHASE:
+        - All players wake up
+        - The night's victim is announced and removed
+        - Players discuss in rounds to identify werewolves
+        - Each player gets 2 turns to speak (2 rounds of discussion)
+        - Players share suspicions, ask questions, and defend themselves
+        - After discussion, players vote to eliminate someone
+        - The player with the most votes is eliminated and their role revealed
+
+        WIN CONDITIONS:
+        - VILLAGERS WIN: All werewolves are eliminated
+        - WEREWOLVES WIN: Werewolves equal or outnumber villagers
+
+        PLAYER ROLES:
+
+        VILLAGERS:
+        - Goal: Identify and eliminate all werewolves
+        - Can only vote during day phase
+        - Must use logic and observation to find werewolves
+        - Should pay attention to suspicious behavior and voting patterns
+
+        WEREWOLVES:
+        - Goal: Eliminate villagers until they equal/outnumber them
+        - Can eliminate one villager each night
+        - Must pretend to be villagers during day phase
+        - Should deflect suspicion and blend in with villagers
+
+        STRATEGY TIPS:
+        - Watch for inconsistencies in statements
+        - Track voting patterns across multiple days
+        - Pay attention to who benefits from eliminations
+        - Notice who deflects suspicion or changes topics
+        - Form alliances carefully
+        - Use deductive reasoning based on game flow
+        """
+
+        return [Document(page_content=rules_text, metadata={"source": "game_rules"})]
 
     def add_conversations(self, conversation: Dict[str, str], game_state: GameState):
         """Add conversation and game state to data"""
