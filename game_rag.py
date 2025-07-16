@@ -5,7 +5,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.tools import tool
-from .Player import GameState
+from Player import GameState
 from typing import Optional, Any, Dict
 from langchain_openai import ChatOpenAI
 
