@@ -1,11 +1,20 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from main import GameState
+from typing import TypedDict, List, Dict
 
 
 class PlayerStatus(Enum):
     ALIVE = "alive"
     DEAD = "dead"
+
+
+class GameState(TypedDict):
+    phase: str  # "night", "day", "voting"
+    day_count: int
+    players: Dict[str, PlayerStatus]  # Mapping ids to status
+    alive_players: List[str]
+    last_eliminated: str
+    last_night_victim: str
 
 
 class Player(ABC):
@@ -26,5 +35,5 @@ class Player(ABC):
         pass
 
     @abstractmethod
-    def get_user_id(self) -> str:
+    def get_user_id(self):
         pass

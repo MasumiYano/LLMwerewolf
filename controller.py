@@ -1,11 +1,10 @@
 from game_rag import GameRAG
-from Player import Player
-from typing import Dict
-from main import GameState
-from Player import PlayerStatus
+from Player import Player, GameState, PlayerStatus  # Import GameState from Player
+from typing import Dict, List  # Added List import
 import random
 from werewolf import Werewolf
 from villager import Villager
+from langchain_core.messages import SystemMessage, HumanMessage  # Added import
 
 
 class Controller:
@@ -25,12 +24,14 @@ class Controller:
     def add_player(self, player: Player):
         """Add player to the game"""
         self.players[player.get_user_id()] = player
-        self.game_state["players"][player.get_user_id] = PlayerStatus.ALIVE
+        self.game_state["players"][player.get_user_id()] = (
+            PlayerStatus.ALIVE
+        )  # Fixed missing ()
         self.game_state["alive_players"].append(player.get_user_id())
 
     def setup_game(self, player_names: List[str]):
-        """Setup game with 5 villagers and 2 werewolves"""
-        if len(player_names) != 7:
+        """Setup game with 4 villagers and 2 werewolves"""  # Fixed comment
+        if len(player_names) != 6:  # Fixed number
             raise ValueError("Need exactly 6 players")
 
         werewolf_players = random.sample(player_names, 2)
@@ -54,7 +55,7 @@ class Controller:
         alive_werewolves = [
             player_id
             for player_id in self.game_state["alive_players"]
-            if self.players[player_id].role_name == "werewolf"
+            if self.players[player_id].role_name == "werewolf"  # Fixed method call
         ]
 
         if len(alive_werewolves) < 2:
@@ -62,7 +63,7 @@ class Controller:
             target = werewolf.get_night_action(self.game_state)
             if target:
                 print(
-                    f"Remaining werewolf {alive_werewolves[0]} chooses to eliminate{target}"
+                    f"Remaining werewolf {alive_werewolves[0]} chooses to eliminate {target}"  # Fixed space
                 )
 
             return target
@@ -94,7 +95,7 @@ class Controller:
             potential_targets = [
                 p
                 for p in self.game_state["alive_players"]
-                if self.players[p].get_role() != "werewolf"
+                if self.players[p].role_name != "werewolf"  # Fixed method call
             ]
 
             system_prompt = f"""Based on your team discussion, make your final choice for who to eliminate.
@@ -113,7 +114,7 @@ class Controller:
                 }
             }
 
-            message = [
+            messages = [  # Fixed variable name
                 SystemMessage(content=system_prompt),
                 HumanMessage(content="Your final vote?"),
             ]
@@ -127,22 +128,24 @@ class Controller:
                 vote_response, self.game_state["alive_players"]
             )
 
-            if target and self.players[target].get_role() != "werewolf":
+            if (
+                target and self.players[target].role_name != "werewolf"
+            ):  # Fixed method call
                 werewolf_votes[werewolf_id] = target
                 print(f"{werewolf_id} votes to eliminate {target}")
 
-            if werewolf_votes:
-                votes = list(werewolf_votes.values())
-                victim = max(set(votes), key=votes.count)
-                return victim
+        if werewolf_votes:  # Fixed indentation
+            votes = list(werewolf_votes.values())
+            victim = max(set(votes), key=votes.count)
+            return victim
 
-            return None
+        return None
 
     def night_phase(self):
         """Execute night phase with werewolf discussion"""
         print(f"\n{'=' * 50}")
         print(f"NIGHT {self.game_state['day_count']}")
-        print(f"\n{'=' * 50}")
+        print(f"{'=' * 50}")
         self.game_state["phase"] = "night"
 
         victim = self.werewolf_night_discussion()
@@ -156,15 +159,17 @@ class Controller:
             self.game_state["last_night_victim"] = ""
 
     def day_discussion(self):
-        """2 round of clock wise discussion"""
+        """2 rounds of clockwise discussion"""  # Fixed typo
         print(f"\n{'=' * 50}")
-        print(f"DAT {self.game_state['day_count']} - Discussion")
+        print(f"DAY {self.game_state['day_count']} - Discussion")  # Fixed typo
         print(f"{'=' * 50}")
         self.game_state["phase"] = "day"
 
         all_statements = []
         alive_in_order = [
-            p for p in self.players if p in self.game_state["alive_players"]
+            p
+            for p in self.player_order
+            if p in self.game_state["alive_players"]  # Fixed loop
         ]
 
         for round_num in range(1, 3):
@@ -204,7 +209,7 @@ class Controller:
         for player_id in alive_in_order:
             player = self.players[player_id]
 
-            if player.get_role() == "villager":
+            if player.role_name == "villager":  # Fixed method call
                 vote = player.get_vote(self.game_state, discussion_history)
             else:
                 vote = player.get_vote(self.game_state)
@@ -213,7 +218,7 @@ class Controller:
                 votes[player_id] = vote
                 print(f"{player_id} votes for {vote}")
             else:
-                print(f"{player_id} abstain")
+                print(f"{player_id} abstains")  # Fixed typo
 
         if votes:
             vote_counts = {}
@@ -230,7 +235,9 @@ class Controller:
             self.eliminate_player(eliminated)
             self.game_state["last_eliminated"] = eliminated
             print(f"{eliminated} was voted out")
-            print(f"{eliminated} was a {self.players[eliminated].get_role()}")
+            print(
+                f"{eliminated} was a {self.players[eliminated].role_name}"
+            )  # Fixed method call
 
         else:
             print("No votes cast - no elimination today.")
@@ -259,7 +266,7 @@ class Controller:
 
     def play_game(self):
         print("\nStarting Werewolf Game...")
-        print("5 Villagers vs 2 Werewolves")
+        print("4 Villagers vs 2 Werewolves")  # Fixed comment
 
         while True:
             self.night_phase()

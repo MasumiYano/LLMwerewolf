@@ -1,6 +1,5 @@
 from typing import Optional, Dict, List
-from main import GameState
-from Player import Player, PlayerStatus
+from Player import Player, PlayerStatus, GameState  # Import GameState from Player
 from game_rag import GameRAG
 from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
@@ -28,10 +27,13 @@ class Villager(Player):
             self.llm, self.tools, checkpointer=self.memory
         )
 
-    def _create_rule_search_tool(self, query: str):
+    def _create_rule_search_tool(self):  # Removed extra parameter
         @tool
-        def search_rules(query: str):
-            docs = self.rag.villager_vector_store.similarity_search(query, k=2)
+        def search_rules(query: str) -> str:  # Added return type
+            """Search for game rules and mechanics"""
+            docs = self.rag.rule_vector_store.similarity_search(
+                query, k=2
+            )  # Fixed vector store
             return "\n\n".join([doc.page_content for doc in docs])
 
         return search_rules
@@ -40,7 +42,8 @@ class Villager(Player):
         """Search for villager strategies and tactics"""
 
         @tool
-        def search_villager_strategies(query: str):
+        def search_villager_strategies(query: str) -> str:  # Added return type
+            """Search for villager strategies and tactics"""
             docs = self.rag.villager_vector_store.similarity_search(query, k=2)
             return "\n\n".join([doc.page_content for doc in docs])
 
@@ -48,7 +51,7 @@ class Villager(Player):
 
     def _create_conversation_search_tool(self):
         @tool
-        def search_conversations(query: str):
+        def search_conversations(query: str) -> str:  # Added return type
             """Search recent game conversations for relevant information"""
             docs = self.rag.conversation_vector_store.similarity_search(query, k=3)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -60,13 +63,13 @@ class Villager(Player):
         game_state: GameState,
         round_num: int,
         previous_statements: List[Dict[str, str]],
-    ):
+    ) -> str:  # Added return type
         """Speak during the day phase"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in previous_statements[-10:]
         ])
 
-        system_prompt = f"""You are villager in a Werewolf game. It's day {game_state["day_count"]}, round {round_num}.
+        system_prompt = f"""You are a villager in a Werewolf game. It's day {game_state["day_count"]}, round {round_num}.
 
         Current game state:
             - Alive players: {game_state["alive_players"]}
@@ -77,8 +80,8 @@ class Villager(Player):
             {conversation_context}
 
         As a villager, your goals:
-            1. Identify sispicious behavior and inconsistencies
-            2. Share logical deductions about who migth be werewolves
+            1. Identify suspicious behavior and inconsistencies  # Fixed typo
+            2. Share logical deductions about who might be werewolves  # Fixed typo
             3. Respond to accusations or suspicions directed at you
             4. Ask probing questions to gather information
             5. Build trust with other villagers
@@ -86,7 +89,13 @@ class Villager(Player):
         Keep your response concise but meaningful (2-3 sentences).
         """
 
-        config = [
+        config = {  # Fixed config structure
+            "configurable": {
+                "thread_id": f"villager_{self.user_id}_day_{game_state['day_count']}_round_{round_num}"
+            }
+        }
+
+        messages = [  # Fixed variable name
             SystemMessage(content=system_prompt),
             HumanMessage(content="It's your turn to speak. What do you want to say?"),
         ]
@@ -98,7 +107,9 @@ class Villager(Player):
 
         return response
 
-    def get_vote(self, game_state: GameState, discussion_history: List[Dict[str, str]]):
+    def get_vote(
+        self, game_state: GameState, discussion_history: List[Dict[str, str]]
+    ) -> Optional[str]:  # Added return type
         """Vote after hearing all discussion"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in discussion_history
@@ -115,7 +126,7 @@ class Villager(Player):
             2. Who tried to deflect suspicion
             3. Voting patterns from previous days
 
-        Respond with just the player name you want to vote for, or 'non' to abstain.
+        Respond with just the player name you want to vote for, or 'none' to abstain.  # Fixed typo
         """
 
         config = {
@@ -136,29 +147,33 @@ class Villager(Player):
 
         return self._extract_target(response, game_state["alive_players"])
 
-    def _extract_target(self, response: str, alive_players: List[str]):
-        response = response.lower()
+    def _extract_target(
+        self, response: str, alive_players: List[str]
+    ) -> Optional[str]:  # Added return type
+        response_lower = response.lower()  # Fixed variable name
 
-        if any(word in response for word in ["none", "abstain", "no one"]):
+        if any(word in response_lower for word in ["none", "abstain", "no one"]):
             return None
 
         for player in alive_players:
-            if player.lower() in response:
+            if player.lower() in response_lower:
                 return player
 
         return None
 
-    def get_night_action(self, game_state: GameState):
+    def get_night_action(
+        self, game_state: GameState
+    ) -> Optional[str]:  # Added return type
         return None
 
-    def take_turn(self, game_state: GameState):
-        return None
+    def take_turn(self, game_state: GameState) -> str:  # Added return type
+        return self.speak_in_discussion(game_state, 1, [])
 
-    def get_description(self):
+    def get_description(self) -> str:  # Added return type
         return f"Villager {self.user_id} - trying to identify werewolves"
 
-    def get_user_id(self):
+    def get_user_id(self) -> str:  # Added return type
         return self.user_id
 
-    def get_role(self):
+    def get_role(self) -> str:  # Added return type
         return "villager"
