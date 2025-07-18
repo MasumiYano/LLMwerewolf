@@ -37,6 +37,10 @@ class GameRAG:
         _ = self.rule_vector_store.add_documents(documents=self.rule_splits)
 
     def initialize_all_vectors(self):
+        os.makedirs("./chroma_db/rules", exist_ok=True)
+        os.makedirs("./chroma_db/werewolf", exist_ok=True)
+        os.makedirs("./chroma_db/villager", exist_ok=True)
+
         self.rule_vector_store = Chroma(
             collection_name="shared_rules",
             embedding_function=self.embeddings,
