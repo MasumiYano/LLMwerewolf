@@ -24,7 +24,7 @@ class Controller:
         self.game_state["alive_players"].append(player.get_user_id())
 
     def setup_game(self, player_names: List[str]):
-        """Setup game with 4 villagers and 2 werewolves"""  # Fixed comment
+        """Setup game with given player number"""
         if len(player_names) != PLAYER_NUM:  # Fixed number
             raise ValueError(f"Need exactly {PLAYER_NUM} players")
 

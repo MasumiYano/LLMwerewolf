@@ -29,7 +29,7 @@ class Villager(Player):
 
     def _create_rule_search_tool(self):  # Removed extra parameter
         @tool
-        def search_rules(query: str) -> str:  # Added return type
+        def search_rules(query: str):
             """Search for game rules and mechanics"""
             docs = self.rag.rule_vector_store.similarity_search(
                 query, k=2
@@ -42,7 +42,7 @@ class Villager(Player):
         """Search for villager strategies and tactics"""
 
         @tool
-        def search_villager_strategies(query: str) -> str:  # Added return type
+        def search_villager_strategies(query: str):
             """Search for villager strategies and tactics"""
             docs = self.rag.villager_vector_store.similarity_search(query, k=2)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -51,7 +51,7 @@ class Villager(Player):
 
     def _create_conversation_search_tool(self):
         @tool
-        def search_conversations(query: str) -> str:  # Added return type
+        def search_conversations(query: str):
             """Search recent game conversations for relevant information"""
             docs = self.rag.conversation_vector_store.similarity_search(query, k=3)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -63,7 +63,7 @@ class Villager(Player):
         game_state: GameState,
         round_num: int,
         previous_statements: List[Dict[str, str]],
-    ) -> str:  # Added return type
+    ):
         """Speak during the day phase"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in previous_statements[-10:]
@@ -107,9 +107,7 @@ class Villager(Player):
 
         return response
 
-    def get_vote(
-        self, game_state: GameState, discussion_history: List[Dict[str, str]]
-    ) -> Optional[str]:  # Added return type
+    def get_vote(self, game_state: GameState, discussion_history: List[Dict[str, str]]):
         """Vote after hearing all discussion"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in discussion_history
@@ -147,9 +145,7 @@ class Villager(Player):
 
         return self._extract_target(response, game_state["alive_players"])
 
-    def _extract_target(
-        self, response: str, alive_players: List[str]
-    ) -> Optional[str]:  # Added return type
+    def _extract_target(self, response: str, alive_players: List[str]):
         response_lower = response.lower()  # Fixed variable name
 
         if any(word in response_lower for word in ["none", "abstain", "no one"]):
@@ -161,19 +157,17 @@ class Villager(Player):
 
         return None
 
-    def get_night_action(
-        self, game_state: GameState
-    ) -> Optional[str]:  # Added return type
+    def get_night_action(self, game_state: GameState):
         return None
 
-    def take_turn(self, game_state: GameState) -> str:  # Added return type
+    def take_turn(self, game_state: GameState):
         return self.speak_in_discussion(game_state, 1, [])
 
-    def get_description(self) -> str:  # Added return type
+    def get_description(self):
         return f"Villager {self.user_id} - trying to identify werewolves"
 
-    def get_user_id(self) -> str:  # Added return type
+    def get_user_id(self):
         return self.user_id
 
-    def get_role(self) -> str:  # Added return type
+    def get_role(self):
         return "villager"

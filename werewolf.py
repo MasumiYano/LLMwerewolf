@@ -33,7 +33,7 @@ class Werewolf(Player):
 
     def _create_rule_search_tool(self):
         @tool
-        def search_rules(query: str) -> str:  # Added return type
+        def search_rules(query: str):
             """Search for game rules and mechanics"""
             docs = self.rag.rule_vector_store.similarity_search(query, k=2)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -42,7 +42,7 @@ class Werewolf(Player):
 
     def _create_werewolf_strategy_tool(self):
         @tool
-        def search_werewolf_strategies(query: str) -> str:  # Added return type
+        def search_werewolf_strategies(query: str):
             """Search werewolf strategies"""
             docs = self.rag.werewolf_vector_store.similarity_search(query, k=2)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -51,7 +51,7 @@ class Werewolf(Player):
 
     def _create_conversation_search_tool(self):
         @tool
-        def search_conversations(query: str) -> str:  # Added return type
+        def search_conversations(query: str):
             """Search recent game conversations"""
             docs = self.rag.conversation_vector_store.similarity_search(query, k=3)
             return "\n\n".join([doc.page_content for doc in docs])
@@ -63,7 +63,7 @@ class Werewolf(Player):
         game_state: GameState,
         werewolf_teammates: List[str],
         previous_discussion: List[Dict[str, str]],
-    ) -> str:  # Added return type
+    ):
         """Talk to werewolf team to decide who to eliminate"""
         discussion_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in previous_discussion
@@ -118,7 +118,7 @@ class Werewolf(Player):
         game_state: GameState,
         round_num: int,
         previous_discussions: List[Dict[str, str]],
-    ) -> str:  # Added return type
+    ):
         """Speak during the structured day discussion"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}"
@@ -163,7 +163,7 @@ class Werewolf(Player):
 
         return response
 
-    def get_vote(self, game_state: GameState) -> Optional[str]:  # Added return type
+    def get_vote(self, game_state: GameState):
         """Voting during day phase"""
         system_prompt = f"""You are a werewolf who must vote like a villager would.
 
@@ -197,9 +197,7 @@ class Werewolf(Player):
 
         return self._extract_target(final_response, game_state["alive_players"])
 
-    def get_night_action(
-        self, game_state: GameState
-    ) -> Optional[str]:  # Added return type
+    def get_night_action(self, game_state: GameState):
         """Make a final decision on who to eliminate (used when only one werewolf left)"""
         potential_targets = [
             p for p in game_state["alive_players"] if p != self.user_id
@@ -235,9 +233,7 @@ class Werewolf(Player):
 
         return self._extract_target(final_response, game_state["alive_players"])
 
-    def _extract_target(
-        self, response: str, alive_players: list
-    ) -> Optional[str]:  # Added return type
+    def _extract_target(self, response: str, alive_players: list):
         """Extract target player from LLM response"""
         response_lower = response.lower()
 
@@ -253,13 +249,13 @@ class Werewolf(Player):
     def take_turn(self, game_state: GameState):  # Added return type
         return self.speak_in_discussion(game_state, 1, [])
 
-    def get_description(self) -> str:  # Added return type
+    def get_description(self):
         return (
             f"Werewolf player {self.user_id} - secretly working to eliminate villagers"
         )
 
-    def get_user_id(self) -> str:  # Added return type
+    def get_user_id(self):
         return self.user_id
 
-    def get_role(self) -> str:  # Added return type
+    def get_role(self):
         return "werewolf"

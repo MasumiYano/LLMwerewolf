@@ -40,16 +40,19 @@ class GameRAG:
         self.rule_vector_store = Chroma(
             collection_name="shared_rules",
             embedding_function=self.embeddings,
+            persist_directory="./chroma_bd/rules",
         )
 
         self.werewolf_vector_store = Chroma(
             collection_name="werewolf_strategies",
             embedding_function=self.embeddings,
+            persist_directory="./chroma_bd/werewolf",
         )
 
         self.villager_vector_store = Chroma(
             collection_name="villager_strategies",
             embedding_function=self.embeddings,
+            persist_directory="./chroma_bd/villager",
         )
 
         self.conversation_vector_store = Chroma(
