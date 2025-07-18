@@ -179,7 +179,7 @@ class Werewolf(Player):
 
         return response
 
-    def get_vote(self, game_state: GameState):
+    def get_vote(self, game_state: GameState, teammates: List[str]):
         """Voting during day phase"""
         system_prompt = f"""You are a werewolf who must vote like a villager would.
 
