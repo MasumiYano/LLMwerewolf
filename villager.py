@@ -69,29 +69,55 @@ class Villager(Player):
             f"{stmt['player']}: {stmt['message']}" for stmt in previous_statements[-10:]
         ])
 
-        system_prompt = f"""You are a villager in a Werewolf game. It's day {game_state["day_count"]}, round {round_num}.
+        if game_state["day_count"] == 0:
+            system_prompt = f"""You are a villager in a Werewolf game. It's the FIRST day (Day 0), round {round_num}.
 
-        Current game state:
-            - Alive players: {game_state["alive_players"]}
-            - Last night's victim: {game_state.get("last_night_victim", "none")}
-            - Last eliminated: {game_state.get("last_eliminated", "none")}
+            Current game state:
+                - Alive players: {game_state["alive_players"]}
+                - Last night's victim: {game_state.get("last_night_victim", "none")}
 
-        Recent conversation:
-            {conversation_context}
+            This is our FIRST discussion. Focus on:
+                1. React to who was eliminated last night ({game_state.get("last_night_victim", "none")})
+                2. Share your initial thoughts on why they might have been targeted
+                3. Make observations about how others are reacting to the elimination
+                4. Ask questions to gather information from other players
+                5. Build initial trust and form early impressions
 
-        As a villager, your goals:
-            1. Make SPECIFIC observations about individual players (not generic advice)
-            2. Ask DIRECT questions to other players about their behavior
-            3. Reference CONCRETE moments from pervious rounds 
-            4. Make accusations or defed yourself with evidence
-            5. Propose specific theories about who might be werewolves and WHY
+            Since this is Day 0, don't reference "yesterday" or "previous rounds" - there weren't any!
 
-        Be concrete and ENGAGING
-        GOOD: "XX, I noticed you voted for YY yesterday, but stayed quiet about it, why?"
-        BAD: "We shuold all shre observations and stay vigilant! (Too generic and not engaging)"
+            Recent conversation this round:
+                {conversation_context}
 
-        Keep your response concise but meaningful (2-3 sentences).
-        """
+            Be concrete and engaging (2-3 sentences):
+            GOOD: "I'm surprised {game_state.get("last_night_victim", "X")} was targeted - they seemed quiet. Alice, what's your take on this?"
+            BAD: "We should analyze yesterday's voting patterns" (there weren't any!)
+
+            Keep your response concise but meaningful (2-3 sentences).
+            """
+        else:
+            system_prompt = f"""You are a villager in a Werewolf game. It's day {game_state["day_count"]}, round {round_num}.
+
+            Current game state:
+                - Alive players: {game_state["alive_players"]}
+                - Last night's victim: {game_state.get("last_night_victim", "none")}
+                - Last eliminated by vote: {game_state.get("last_eliminated", "none")}
+
+            Recent conversation:
+                {conversation_context}
+
+            As a villager, your goals:
+                1. Make SPECIFIC observations about individual players (not generic advice)
+                2. Ask DIRECT questions to other players about their behavior
+                3. Reference CONCRETE moments from previous rounds and voting patterns
+                4. Make accusations or defend yourself with evidence
+                5. Propose specific theories about who might be werewolves and WHY
+
+            Be concrete and ENGAGING (3-4 sentences):
+            GOOD: "Bob, I noticed you voted for Charlie yesterday but stayed quiet about it - why?"
+            BAD: "We should all share observations and stay vigilant!" (too generic)
+
+            Keep your response concise but meaningful (3-4 sentences).
+            """
 
         config = {  # Fixed config structure
             "configurable": {

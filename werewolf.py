@@ -129,37 +129,65 @@ class Werewolf(Player):
             for stmt in previous_discussions[-10:]
         ])
 
-        system_prompt = f"""You are a werewolf pretending to be a villager. It's day {game_state["day_count"]}, round {round_num}.
+        if game_state["day_count"] == 0:
+            system_prompt = f"""You are a werewolf pretending to be a villager. It's the FIRST day (Day 0), round {round_num}.
 
-        **CRITICAL**:
-            - Your werewolf teammates: {teammate}
-            - NEVER cast suspicion on your teammate: {teammate}
+            **CRITICAL - YOUR WEREWOLF TEAMMATES: {teammate}**
+            - NEVER cast suspicion on your teammates: {teammate}
+            - Protect them from accusations
+
+            Current game state:
+                - Alive players: {game_state["alive_players"]}
+                - Your werewolf teammates: {teammate}
+                - Last night's victim: {game_state.get("last_night_victim", "none")} (you eliminated them!)
+
+            This is the FIRST discussion. Act like a concerned villager:
+                1. React "naturally" to the night elimination (act surprised/concerned)
+                2. Deflect any early suspicion from yourself or teammates
+                3. Build trust by appearing helpful and analytical
+                4. Make observations about other players' reactions
+                5. Don't reference "yesterday" or "previous rounds" - there weren't any!
+
+            Recent conversation this round:
+                {conversation_context}
+
+            Be concrete and engaging (2-3 sentences):
+            GOOD: "I'm shocked about {game_state.get("last_night_victim", "X")}! Frank, you seem nervous - any thoughts on why they were targeted?"
+            BAD: "Based on yesterday's patterns..." (there weren't any!)
+
+            Act convincingly as a concerned villager on the FIRST day.
+            """
+        else:
+            system_prompt = f"""You are a werewolf pretending to be a villager. It's day {game_state["day_count"]}, round {round_num}.
+
+            **CRITICAL - YOUR WEREWOLF TEAMMATES: {teammate}**
+            - NEVER cast suspicion on your teammates: {teammate}
             - Protect them from accusations
             - Work together as a team
 
-        Current game state:
-            - Alive players: {game_state["alive_players"]}
-            - Werewolf teammates: {teammate}
-            - Last night's victim: {game_state.get("last_night_victim", "none")}
-            - Last eliminated: {game_state.get("last_eliminated", "none")}
+            Current game state:
+                - Alive players: {game_state["alive_players"]}
+                - Your werewolf teammates: {teammate}
+                - Last night's victim: {game_state.get("last_night_victim", "none")}
+                - Last eliminated by vote: {game_state.get("last_eliminated", "none")}
 
-        Recent conversation: 
-            {conversation_context}
+            Recent conversation: 
+                {conversation_context}
 
-        As a werewolf disguised as a villager:
-            1. Act like you're trying to find werewolves
-            2. Deflect suspicion from yourself and other werewolves
-            3. Cast subtle doubt on villagers 
-            4. Build trust and appear helpful
-            5. Respond naturally to what others have said
-            6. Make SPECIFIC observations about individual players and NOT generic advice
+            As a werewolf disguised as a villager:
+                1. Act like you're hunting werewolves (but NEVER your teammates)
+                2. Deflect suspicion from yourself and teammates: {teammate}
+                3. Cast suspicion on VILLAGERS only
+                4. Reference previous voting patterns to seem analytical
+                5. If a teammate is accused, defend them subtly
+                6. Make SPECIFIC observations about individual players
 
-        Be concreate and engaging. Make specific observations or ask direct questions.
-        EXAMPLE: "XX, I noticed you hesitated before YY, why?"
-        NOT: "We shuold all stay vigilant"
+            Be concrete and engaging (3-4 sentences):
+            EXAMPLE: "Alice, I noticed you hesitated before voting yesterday - why?"
+            NOT: "We should all stay vigilant"
 
-        Act convincingly as a villager. Keep response concise (2-3 sentences).
-        """
+            Act convincingly as a villager but PROTECT YOUR TEAM: {teammate}
+            """
 
         config = {
             "configurable": {
