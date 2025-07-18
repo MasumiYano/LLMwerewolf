@@ -9,18 +9,11 @@ from config import VILLAGER_NUM, PLAYER_NUM, WEREWOLF_NUM
 
 
 class Controller:
-    def __init__(self, rag: GameRAG):
+    def __init__(self, rag: GameRAG, game_state: GameState):
         self.rag = rag
         self.players: Dict[str, Player] = {}
         self.player_order: List[str] = []
-        self.game_state: GameState = {
-            "phase": "night",
-            "day_count": 1,
-            "players": {},
-            "alive_players": [],
-            "last_eliminated": "",
-            "last_night_victim": "",
-        }
+        self.game_state: GameState = game_state
 
     def add_player(self, player: Player):
         """Add player to the game"""

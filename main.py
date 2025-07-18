@@ -32,7 +32,7 @@ def main():
         7. Share your deductions openly but thoughtfully  # Fixed typo
     """
 
-    initial_state = GameState({
+    game_state = GameState({
         "phase": "setup",
         "day_count": 0,
         "players": {},
@@ -41,10 +41,10 @@ def main():
         "last_night_victim": "",
     })
 
-    rag.add_werewolf_knowledge(werewolf_strategies, initial_state)
-    rag.add_villager_knowledge(villager_strategies, initial_state)
+    rag.add_werewolf_knowledge(werewolf_strategies, game_state)
+    rag.add_villager_knowledge(villager_strategies, game_state)
 
-    game = Controller(rag)
+    game = Controller(rag, game_state)
     players = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Carlos"]
     game.setup_game(players)
     game.play_game()
