@@ -80,11 +80,15 @@ class Villager(Player):
             {conversation_context}
 
         As a villager, your goals:
-            1. Identify suspicious behavior and inconsistencies  # Fixed typo
-            2. Share logical deductions about who might be werewolves  # Fixed typo
-            3. Respond to accusations or suspicions directed at you
-            4. Ask probing questions to gather information
-            5. Build trust with other villagers
+            1. Make SPECIFIC observations about individual players (not generic advice)
+            2. Ask DIRECT questions to other players about their behavior
+            3. Reference CONCRETE moments from pervious rounds 
+            4. Make accusations or defed yourself with evidence
+            5. Propose specific theories about who might be werewolves and WHY
+
+        Be concrete and ENGAGING
+        GOOD: "XX, I noticed you voted for YY yesterday, but stayed quiet about it, why?"
+        BAD: "We shuold all shre observations and stay vigilant! (Too generic and not engaging)"
 
         Keep your response concise but meaningful (2-3 sentences).
         """
@@ -124,7 +128,7 @@ class Villager(Player):
             2. Who tried to deflect suspicion
             3. Voting patterns from previous days
 
-        Respond with just the player name you want to vote for, or 'none' to abstain.  # Fixed typo
+        Respond with just the player name you want to vote for, or 'none' to abstain.
         """
 
         config = {

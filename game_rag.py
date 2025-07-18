@@ -122,24 +122,27 @@ class GameRAG:
 
     def add_conversations(self, conversation: Dict[str, str], game_state: GameState):
         """Add conversation and game state to data"""
+        flatten_game_state = self._flatten_metadata(game_state)
         conversation_docs = self.text_splitter.create_documents(
-            texts=[str(conversation)], metadatas=[dict(game_state)]
+            texts=[str(conversation)], metadatas=[flatten_game_state]
         )
 
         self.conversation_vector_store.add_documents(conversation_docs)
 
     def add_werewolf_knowledge(self, knowledge: str, game_state: GameState):
         """Add werewolf knowledge to werewolf vector"""
+        flatten_game_state = self._flatten_metadata(game_state)
         knowledge_docs = self.text_splitter.create_documents(
-            texts=[knowledge], metadatas=[dict(game_state)]
+            texts=[knowledge], metadatas=[flatten_game_state]
         )
 
         self.werewolf_vector_store.add_documents(knowledge_docs)
 
     def add_villager_knowledge(self, knowledge: str, game_state: GameState):
         """Add villager knowledge to villager vector"""
+        flatten_game_state = self._flatten_metadata(game_state)
         knowledge_docs = self.text_splitter.create_documents(
-            texts=[knowledge], metadatas=[dict(game_state)]
+            texts=[knowledge], metadatas=[flatten_game_state]
         )
 
         self.villager_vector_store.add_documents(knowledge_docs)
@@ -149,3 +152,14 @@ class GameRAG:
         self.conversation_vector_store = Chroma(
             collection_name="current_conversation", embedding_function=self.embeddings
         )
+
+    def _flatten_metadata(self, game_state: GameState):
+        return {
+            "phase": game_state["phase"],
+            "day_count": game_state["day_count"],
+            "alive_players_count": len(game_state["alive_players"]),
+            "alive_players": ",".join(game_state["alive_players"]),
+            "last_eliminated": game_state["last_eliminated"],
+            "last_night_victim": game_state["last_night_victim"],
+            "total_players": len(game_state["players"]),
+        }

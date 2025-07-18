@@ -153,17 +153,15 @@ class Controller:
             self.game_state["last_night_victim"] = ""
 
     def day_discussion(self):
-        """2 rounds of clockwise discussion"""  # Fixed typo
+        """2 rounds of clockwise discussion"""
         print(f"\n{'=' * 50}")
-        print(f"DAY {self.game_state['day_count']} - Discussion")  # Fixed typo
+        print(f"DAY {self.game_state['day_count']} - Discussion")
         print(f"{'=' * 50}")
         self.game_state["phase"] = "day"
 
         all_statements = []
         alive_in_order = [
-            p
-            for p in self.player_order
-            if p in self.game_state["alive_players"]  # Fixed loop
+            p for p in self.player_order if p in self.game_state["alive_players"]
         ]
 
         for round_num in range(1, 3):
@@ -171,9 +169,16 @@ class Controller:
 
             for player_id in alive_in_order:
                 player = self.players[player_id]
-                statement = player.speak_in_discussion(
-                    self.game_state, round_num, all_statements
-                )
+
+                if player.role_name == "werewolf":
+                    teammates = self.get_werewolf_teammate(player_id)
+                    statement = player.speak_in_discussion(
+                        self.game_state, round_num, all_statements, teammates
+                    )
+                else:
+                    statement = player.speak_in_discussion(
+                        self.game_state, round_num, all_statements
+                    )
 
                 all_statements.append({
                     "player": player_id,
@@ -203,16 +208,17 @@ class Controller:
         for player_id in alive_in_order:
             player = self.players[player_id]
 
-            if player.role_name == "villager":  # Fixed method call
+            if player.role_name == "villager":
                 vote = player.get_vote(self.game_state, discussion_history)
             else:
-                vote = player.get_vote(self.game_state)
+                teammates = self.get_werewolf_teammate(player_id)
+                vote = player.get_vote(self.game_state, teammates)
 
             if vote and vote in self.game_state["alive_players"] and vote != player_id:
                 votes[player_id] = vote
                 print(f"{player_id} votes for {vote}")
             else:
-                print(f"{player_id} abstains")  # Fixed typo
+                print(f"{player_id} abstains")
 
         if votes:
             vote_counts = {}
@@ -229,9 +235,7 @@ class Controller:
             self.eliminate_player(eliminated)
             self.game_state["last_eliminated"] = eliminated
             print(f"{eliminated} was voted out")
-            print(
-                f"{eliminated} was a {self.players[eliminated].role_name}"
-            )  # Fixed method call
+            print(f"{eliminated} was a {self.players[eliminated].role_name}")
 
         else:
             print("No votes cast - no elimination today.")
@@ -260,7 +264,7 @@ class Controller:
 
     def play_game(self):
         print("\nStarting Werewolf Game...")
-        print("4 Villagers vs 2 Werewolves")  # Fixed comment
+        print(f"{VILLAGER_NUM} Villagers vs {WEREWOLF_NUM} Werewolves")  # Fixed comment
 
         while True:
             self.night_phase()
@@ -289,3 +293,16 @@ class Controller:
             print(f"{player_id}: {player.role_name} - {status}")
 
         self.rag.clear_conversation_history()
+
+    def get_werewolf_teammate(self, player_id: str):
+        """Get list of werewolf teammates for a given player"""
+        if self.players[player_id].role_name != "werewolf":
+            return []
+
+        werewolf_teammates = [
+            p_id
+            for p_id in self.game_state["alive_players"]
+            if self.players[p_id].role_name == "werewolf" and p_id != player_id
+        ]
+
+        return werewolf_teammates

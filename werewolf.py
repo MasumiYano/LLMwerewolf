@@ -75,9 +75,9 @@ class Werewolf(Player):
             if p not in werewolf_teammates and p != self.user_id
         ]
 
-        system_prompt = f"""You're a werewolf discussing with your werewolf teammates who to eliminate tonight.  # Fixed typo
+        system_prompt = f"""You're a werewolf discussing with your werewolf teammates who to eliminate tonight.
 
-        Current game state:  # Fixed typo
+        Current game state:
             - Day: {game_state["day_count"]}
             - Alive players: {game_state["alive_players"]}
             - Your werewolf teammates: {werewolf_teammates}
@@ -118,17 +118,28 @@ class Werewolf(Player):
         game_state: GameState,
         round_num: int,
         previous_discussions: List[Dict[str, str]],
+        teammate: List[str],
     ):
         """Speak during the structured day discussion"""
+        if not teammate:
+            teammate = []
+
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}"
             for stmt in previous_discussions[-10:]
         ])
 
-        system_prompt = f"""You are a werewolf pretending to be a villager. It's day {game_state["day_count"]}, round {round_num}.  # Fixed string interpolation
+        system_prompt = f"""You are a werewolf pretending to be a villager. It's day {game_state["day_count"]}, round {round_num}.
+
+        **CRITICAL**:
+            - Your werewolf teammates: {teammate}
+            - NEVER cast suspicion on your teammate: {teammate}
+            - Protect them from accusations
+            - Work together as a team
 
         Current game state:
             - Alive players: {game_state["alive_players"]}
+            - Werewolf teammates: {teammate}
             - Last night's victim: {game_state.get("last_night_victim", "none")}
             - Last eliminated: {game_state.get("last_eliminated", "none")}
 
@@ -141,6 +152,11 @@ class Werewolf(Player):
             3. Cast subtle doubt on villagers 
             4. Build trust and appear helpful
             5. Respond naturally to what others have said
+            6. Make SPECIFIC observations about individual players and NOT generic advice
+
+        Be concreate and engaging. Make specific observations or ask direct questions.
+        EXAMPLE: "XX, I noticed you hesitated before YY, why?"
+        NOT: "We shuold all stay vigilant"
 
         Act convincingly as a villager. Keep response concise (2-3 sentences).
         """
@@ -176,7 +192,7 @@ class Werewolf(Player):
             2. Vote for villagers, especially ones who suspect you
             3. Make your vote seem logical from a villager perspective
 
-        Respond with the player name you want to vote for, or 'none' to abstain.  # Fixed typo
+        Respond with the player name you want to vote for, or 'none' to abstain.
         """
 
         config = {
@@ -197,7 +213,7 @@ class Werewolf(Player):
 
         return self._extract_target(final_response, game_state["alive_players"])
 
-    def get_night_action(self, game_state: GameState):
+    def get_night_action(self, game_state: GameState, teammates: List[str]):
         """Make a final decision on who to eliminate (used when only one werewolf left)"""
         potential_targets = [
             p for p in game_state["alive_players"] if p != self.user_id
@@ -205,12 +221,16 @@ class Werewolf(Player):
 
         system_prompt = f"""You are the last werewolf and must decide who to eliminate tonight.
 
+        **CRITICAL**:
+            - Your werewolf teammates: {teammates}
+            - NEVER vote for your teammates
+            - This is the most important rule - protect your team!
+
         Potential targets: {potential_targets}
 
-        Choose strategically: 
-            1. Who is most suspicious of you?
-            2. Who has the most influence?  # Fixed typo
-            3. What gives you the best chance to win?
+        Vote strategically as a fake villager:
+            1. Make your vote seem logical from a villagers perspective
+            2. Especially target villagers who suspect you or your teammate
 
         Respond with just the player name you want to eliminate.
         """
@@ -247,7 +267,7 @@ class Werewolf(Player):
         return None
 
     def take_turn(self, game_state: GameState):  # Added return type
-        return self.speak_in_discussion(game_state, 1, [])
+        return self.speak_in_discussion(game_state, 1, [], [])
 
     def get_description(self):
         return (
