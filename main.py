@@ -45,7 +45,7 @@ def main():
     rag.add_villager_knowledge(villager_strategies, game_state)
 
     game = Controller(rag, game_state)
-    players = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Carlos"]
+    players = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Carlos", "Potter"]
     game.setup_game(players)
     game.play_game()
 

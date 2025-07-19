@@ -179,7 +179,7 @@ class Werewolf(Player):
                 2. Deflect suspicion from yourself and teammates: {teammate}
                 3. Cast suspicion on VILLAGERS only
                 4. Reference previous voting patterns to seem analytical
-                5. If a teammate is accused, defend them subtly
+               5. If a teammate is accused, defend them subtly
                 6. Make SPECIFIC observations about individual players
 
             Be concrete and engaging (3-4 sentences):
@@ -241,7 +241,7 @@ class Werewolf(Player):
 
         return self._extract_target(final_response, game_state["alive_players"])
 
-    def get_night_action(self, game_state: GameState, teammates: List[str]):
+    def get_night_action(self, game_state: GameState, teammates: List[str] = []):
         """Make a final decision on who to eliminate (used when only one werewolf left)"""
         potential_targets = [
             p for p in game_state["alive_players"] if p != self.user_id
