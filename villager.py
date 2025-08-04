@@ -6,6 +6,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
+from utils import load_prompts
 
 
 class Villager(Player):
@@ -23,14 +24,16 @@ class Villager(Player):
             self._create_conversation_search_tool(),
         ]
 
+        system_prompt = load_prompts("dumb_villager.txt", user_id=self.user_id)
+
         self.agent_executor = create_react_agent(
             self.llm,
             self.tools,
             checkpointer=self.memory,
-            prompt=f"You're {self.user_id}, you're playing villager in a Werewolf game.",
+            prompt=system_prompt,
         )
 
-    def _create_rule_search_tool(self):  # Removed extra parameter
+    def _create_rule_search_tool(self):
         @tool
         def search_rules(query: str):
             """Search for game rules and mechanics"""
@@ -67,60 +70,22 @@ class Villager(Player):
         round_num: int,
         previous_statements: List[Dict[str, str]],
     ):
-        """Speak during the day phase"""
         conversation_context = "\n".join([
             f"{stmt['player']}: {stmt['message']}" for stmt in previous_statements[-10:]
         ])
 
-        if game_state["day_count"] == 0:
-            system_prompt = f"""You are a villager in a Werewolf game. It's the FIRST day (Day 0), round {round_num}.
+        system_prompt = f"""DISCUSSION PHASE - Day {game_state["day_count"]}, Round {round_num}
 
-            Current game state:
-                - Alive players: {game_state["alive_players"]}
-                - Last night's victim: {game_state.get("last_night_victim", "none")}
+        Game State:
+            - Alive players: {game_state["alive_players"]}
+            - Last night's victim: {game_state["last_night_victim"]}
+            - Last eliminated by vote: {game_state["last_eliminated"]}
 
-            This is our FIRST discussion. Focus on:
-                1. React to who was eliminated last night ({game_state.get("last_night_victim", "none")})
-                2. Share your initial thoughts on why they might have been targeted
-                3. Make observations about how others are reacting to the elimination
-                4. Ask questions to gather information from other players
-                5. Build initial trust and form early impressions
+        Recent conversation:
+            {conversation_context}
 
-            Since this is Day 0, don't reference "yesterday" or "previous rounds" - there weren't any!
-
-            Recent conversation this round:
-                {conversation_context}
-
-            Be concrete and engaging (2-3 sentences):
-            GOOD: "I'm surprised {game_state.get("last_night_victim", "X")} was targeted - they seemed quiet. Alice, what's your take on this?"
-            BAD: "We should analyze yesterday's voting patterns" (there weren't any!)
-
-            Keep your response concise but meaningful (2-3 sentences).
-            """
-        else:
-            system_prompt = f"""You are a villager in a Werewolf game. It's day {game_state["day_count"]}, round {round_num}.
-
-            Current game state:
-                - Alive players: {game_state["alive_players"]}
-                - Last night's victim: {game_state.get("last_night_victim", "none")}
-                - Last eliminated by vote: {game_state.get("last_eliminated", "none")}
-
-            Recent conversation:
-                {conversation_context}
-
-            As a villager, your goals:
-                1. Make SPECIFIC observations about individual players (not generic advice)
-                2. Ask DIRECT questions to other players about their behavior
-                3. Reference CONCRETE moments from previous rounds and voting patterns
-                4. Make accusations or defend yourself with evidence
-                5. Propose specific theories about who might be werewolves and WHY
-
-            Be concrete and ENGAGING (3-4 sentences):
-            GOOD: "Bob, I noticed you voted for Charlie yesterday but stayed quiet about it - why?"
-            BAD: "We should all share observations and stay vigilant!" (too generic)
-
-            Keep your response concise but meaningful (3-4 sentences).
-            """
+        Task: Make this discussion engaging.
+        """
 
         config = {  # Fixed config structure
             "configurable": {
@@ -146,18 +111,15 @@ class Villager(Player):
             f"{stmt['player']}: {stmt['message']}" for stmt in discussion_history
         ])
 
-        system_prompt = f"""You are a villager voting to eliminate someone you believe is a werewolf. 
+        system_prompt = f"""VOTING PHASE - Day {game_state["day_count"]}
 
-        Full discussion today: 
+        Full discussion today:
             {conversation_context}
 
-        Based on everything you have heard, who seems most likely to be a werewolf?
-        Consider:
-            1. Suspicious behavior or contradictions
-            2. Who tried to deflect suspicion
-            3. Voting patterns from previous days
 
-        Respond with just the player name you want to vote for, or 'none' to abstain.
+        Available players to vote for: {[p for p in game_state["alive_players"] if p != self.user_id]}
+
+        Task: Choose one player to vote for elimination, or response with 'none' or 'abstain'.
         """
 
         config = {

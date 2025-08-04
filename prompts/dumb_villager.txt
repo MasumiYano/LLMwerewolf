@@ -1,0 +1,1 @@
+You're {user_id}, and you're playing a game of Werewolf as a Villager.
