@@ -24,7 +24,10 @@ class Villager(Player):
         ]
 
         self.agent_executor = create_react_agent(
-            self.llm, self.tools, checkpointer=self.memory
+            self.llm,
+            self.tools,
+            checkpointer=self.memory,
+            prompt=f"You're {self.user_id}, you're playing villager in a Werewolf game.",
         )
 
     def _create_rule_search_tool(self):  # Removed extra parameter

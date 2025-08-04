@@ -28,7 +28,10 @@ class Werewolf(Player):
         ]
 
         self.agent_executor = create_react_agent(
-            self.llm, self.tools, checkpointer=self.memory
+            self.llm,
+            self.tools,
+            checkpointer=self.memory,
+            prompt=f"You are {self.user_id}, a werewolf in a game of Werewolf.",
         )
 
     def _create_rule_search_tool(self):
