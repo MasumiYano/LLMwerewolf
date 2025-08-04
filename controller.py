@@ -5,7 +5,7 @@ import random
 from werewolf import Werewolf
 from villager import Villager
 from langchain_core.messages import SystemMessage, HumanMessage
-from config import VILLAGER_NUM, PLAYER_NUM, WEREWOLF_NUM
+from config import VILLAGER_NUM, PLAYER_NUM, WEREWOLF_NUM, MAX_DISCUSSION_CYCLE
 
 
 class Controller:
@@ -152,8 +152,79 @@ class Controller:
             print("\nNo one was eliminated tonight.")
             self.game_state["last_night_victim"] = ""
 
+    def vote_to_continue_discussion(self, cycle_num: int) -> bool:
+        """Ask all players if they want to continue discussion or move to voting"""
+        print(f"\n--- DISCUSSION CONTINUATION VOTE (Cycle {cycle_num}) ---")
+
+        votes = {}
+        alive_in_order = [
+            p for p in self.player_order if p in self.game_state["alive_players"]
+        ]
+
+        for player_id in alive_in_order:
+            player = self.players[player_id]
+
+            # Simple prompt asking if they want to continue discussion
+            system_prompt = f"""DISCUSSION CONTINUATION VOTE - Day {self.game_state["day_count"]}, After Cycle {cycle_num}
+
+            Game State:
+                - Alive players: {self.game_state["alive_players"]}
+                - Discussion cycles completed: {cycle_num}
+                - Maximum cycles allowed: {MAX_DISCUSSION_CYCLE}
+
+            Task: Decide if you want to continue discussion or move to voting phase.
+            Respond with either "continue discussion" or "move to voting".
+            """
+
+            config = {
+                "configurable": {
+                    "thread_id": f"{player.role_name}_{player_id}_continue_vote_day_{self.game_state['day_count']}_cycle_{cycle_num}"
+                }
+            }
+
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(
+                    content="Do you want to continue discussion or move to voting?"
+                ),
+            ]
+
+            for event in player.agent_executor.stream(
+                {"messages": messages}, config=config, stream_mode="values"
+            ):
+                response = event["messages"][-1].content
+
+            # Extract the decision
+            response_lower = response.lower()
+            if "move to voting" in response_lower or "voting" in response_lower:
+                vote = "voting"
+            elif "continue" in response_lower:
+                vote = "continue"
+            else:
+                # Default to continue if unclear
+                vote = "continue"
+
+            votes[player_id] = vote
+            print(f"{player_id}: {vote}")
+
+        # Count votes
+        continue_votes = sum(1 for vote in votes.values() if vote == "continue")
+        voting_votes = sum(1 for vote in votes.values() if vote == "voting")
+
+        print(
+            f"\nVote results: Continue Discussion: {continue_votes}, Move to Voting: {voting_votes}"
+        )
+
+        # Majority wants to move to voting
+        if voting_votes > continue_votes:
+            print("Majority voted to move to voting phase.")
+            return False
+        else:
+            print("Majority voted to continue discussion.")
+            return True
+
     def day_discussion(self):
-        """2 rounds of clockwise discussion"""
+        """Dynamic discussion with voting to continue after each cycle"""
         print(f"\n{'=' * 50}")
         print(f"DAY {self.game_state['day_count']} - Discussion")
         print(f"{'=' * 50}")
@@ -164,30 +235,49 @@ class Controller:
             p for p in self.player_order if p in self.game_state["alive_players"]
         ]
 
-        for round_num in range(1, 3):
-            print(f"\n--- ROUND: {round_num} ---")
+        cycle_num = 1
 
+        while cycle_num <= MAX_DISCUSSION_CYCLE:
+            print(f"\n--- DISCUSSION CYCLE: {cycle_num} ---")
+
+            # One clockwise round - everyone speaks once
             for player_id in alive_in_order:
                 player = self.players[player_id]
 
                 if player.role_name == "werewolf":
                     teammates = self.get_werewolf_teammate(player_id)
                     statement = player.speak_in_discussion(
-                        self.game_state, round_num, all_statements, teammates
+                        self.game_state, cycle_num, all_statements, teammates
                     )
                 else:
                     statement = player.speak_in_discussion(
-                        self.game_state, round_num, all_statements
+                        self.game_state, cycle_num, all_statements
                     )
 
                 all_statements.append({
                     "player": player_id,
                     "message": statement,
-                    "round": round_num,
+                    "cycle": cycle_num,
                 })
 
                 print(f"{player_id}: {statement}")
 
+            # After each cycle, vote on whether to continue
+            if cycle_num >= MAX_DISCUSSION_CYCLE:
+                print(
+                    f"\nMaximum discussion cycles ({MAX_DISCUSSION_CYCLE}) reached. Moving to voting."
+                )
+                break
+
+            # Ask players if they want to continue discussion
+            should_continue = self.vote_to_continue_discussion(cycle_num)
+
+            if not should_continue:
+                break
+
+            cycle_num += 1
+
+        # Store conversation history
         discussion_summary = {
             stmt["player"]: stmt["message"] for stmt in all_statements
         }
@@ -265,6 +355,7 @@ class Controller:
     def play_game(self):
         print("\nStarting Werewolf Game...")
         print(f"{VILLAGER_NUM} Villagers vs {WEREWOLF_NUM} Werewolves")  # Fixed comment
+        print(f"Maximum discussion cycles per day: {MAX_DISCUSSION_CYCLE}")
 
         while True:
             self.night_phase()
