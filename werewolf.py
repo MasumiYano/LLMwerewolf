@@ -6,7 +6,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
 from typing import List, Dict, Optional, Any
-from util import load_system_prompt
+from utils import load_prompts
 
 
 class Werewolf(Player):
@@ -26,9 +26,8 @@ class Werewolf(Player):
             self._create_conversation_search_tool(),
         ]
 
-        # Load system prompt from file - teammates will be added dynamically in methods
-        system_prompt = load_system_prompt(
-            "werewolf_prompt.txt",
+        system_prompt = load_prompts(
+            "dumb_werewolf.txt",
             user_id=self.user_id,
             teammates="[teammates will be specified in each action]",
         )
